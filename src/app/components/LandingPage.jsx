@@ -43,8 +43,8 @@ const PLNLogo = ({ size = 36 }) => {
 
 // Data lokasi untuk Map (Google Maps Embed URLs)
 const MAP_LOCATIONS = [
-  { id: 'Wonogiri', name: 'Unit Wonogiri', desc: 'Fokus pengelolaan sampah organik dan kompos.', embedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126466.86475659771!2d110.85244585149365!3d-7.86873111979929!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e7a2cf956b9bf7f%3A0xc48c08170c0cbf8!2sWonogiri%2C%20Wonogiri%20Regency%2C%20Central%20Java!5e0!3m2!1sen!2sid!4v1709191100000!5m2!1sen!2sid' },
-  { id: 'Banjarnegara', name: 'Unit Banjarnegara', desc: 'Pusat daur ulang sampah anorganik terbesar.', embedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126590.23190807812!2d109.61057404172412!3d-7.368817730999581!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e7aa07a0003058b%3A0x4027a76e3530a60!2sBanjarnegara%2C%20Banjarnegara%20Regency%2C%20Central%20Java!5e0!3m2!1sen!2sid!4v1709191200000!5m2!1sen!2sid' }
+  { id: 'Wonogiri', name: 'PLTA Wonogiri', desc: 'Fokus pengelolaan sampah organik dan kompos.', embedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126466.86475659771!2d110.85244585149365!3d-7.86873111979929!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e7a2cf956b9bf7f%3A0xc48c08170c0cbf8!2sWonogiri%2C%20Wonogiri%20Regency%2C%20Central%20Java!5e0!3m2!1sen!2sid!4v1709191100000!5m2!1sen!2sid' },
+  { id: 'Banjarnegara', name: 'PLTA PB.Soedirman', desc: 'Pusat daur ulang sampah anorganik terbesar.', embedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126590.23190807812!2d109.61057404172412!3d-7.368817730999581!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e7aa07a0003058b%3A0x4027a76e3530a60!2sBanjarnegara%2C%20Banjarnegara%20Regency%2C%20Central%20Java!5e0!3m2!1sen!2sid!4v1709191200000!5m2!1sen!2sid' }
 ];
 
 export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
@@ -548,7 +548,7 @@ export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
               <ul className="footer-contact-list">
                 <li>
                   <MapPin size={16} className="footer-contact-icon" />
-                  <span>PLTA Mrica, Banjarnegara, Jawa Tengah</span>
+                  <span>PLTA Mrica, Jawa Tengah</span>
                 </li>
                 <li>
                   <Phone size={16} className="footer-contact-icon" />

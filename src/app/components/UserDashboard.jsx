@@ -515,7 +515,7 @@ export function UserDashboard({ deposits, neraca, buktiBayar, masterJenis, maste
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--ds-text)', margin: 0, letterSpacing: '-0.3px' }}>
-            Neraca Sampah - Unit {userUnit || 'Semua Unit'}
+            Neraca Sampah - Unit {userUnit === 'Wonogiri' ? 'PLTA Wonogiri' : (userUnit === 'Banjarnegara' ? 'PLTA PB.Soedirman' : userUnit || 'Semua Unit')}
           </h3>
           <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'var(--ds-text-muted)' }}>
             Menampilkan data timbulan dan pemanfaatan sampah sesuai periode
@@ -649,7 +649,7 @@ const renderBuktiBayar = () => (
           <div style={{ background: 'white', padding: 6, borderRadius: 8, display: 'flex' }}><PLNLogo size={24} /></div>
           <div>
             <h1 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, lineHeight: 1.2, letterSpacing: '-0.5px' }}>Powercycle</h1>
-            <p style={{ fontSize: '0.72rem', color: 'var(--ds-accent-light)', margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>User Portal • {userUnit || 'Pusat'}</p>
+            <p style={{ fontSize: '0.72rem', color: 'var(--ds-accent-light)', margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>User Portal • {userUnit === 'Wonogiri' ? 'PLTA Wonogiri' : (userUnit === 'Banjarnegara' ? 'PLTA PB.Soedirman' : userUnit || 'Pusat')}</p>
           </div>
         </div>
 

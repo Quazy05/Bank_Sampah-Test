@@ -803,7 +803,7 @@ export function AdminDashboard({ role, deposits, neraca, buktiBayar, inventarisa
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--ds-text)', margin: 0, letterSpacing: '-0.3px' }}>
-            Neraca Sampah Bulanan - Unit {userUnit || 'Semua Unit'}
+            Neraca Sampah Bulanan - Unit {userUnit === 'Wonogiri' ? 'PLTA Wonogiri' : (userUnit === 'Banjarnegara' ? 'PLTA PB.Soedirman' : userUnit || 'Semua Unit')}
           </h3>
           <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'var(--ds-text-muted)' }}>
             Menampilkan data timbulan dan pemanfaatan sampah
@@ -1043,7 +1043,7 @@ export function AdminDashboard({ role, deposits, neraca, buktiBayar, inventarisa
           <div>
             <h1 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, lineHeight: 1.2, letterSpacing: '-0.5px' }}>Powercycle</h1>
             <p style={{ fontSize: '0.72rem', color: 'var(--ds-accent-light)', margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              {role ? (role === 'admin sis' ? 'Admin SIS' : 'Admin LLK') : 'Admin Portal'} • {userUnit || 'Pusat'}
+              {role ? (role === 'admin sis' ? 'Admin SIS' : 'Admin LLK') : 'Admin Portal'} • {userUnit === 'Wonogiri' ? 'PLTA Wonogiri' : (userUnit === 'Banjarnegara' ? 'PLTA PB.Soedirman' : userUnit || 'Pusat')}
             </p>
           </div>
         </div>
@@ -1078,7 +1078,7 @@ export function AdminDashboard({ role, deposits, neraca, buktiBayar, inventarisa
             </button>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: 'var(--ds-text)', letterSpacing: '-0.5px' }}>{pageTitles[currentPage]}</h2>
-              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--ds-text-muted)', fontWeight: 500 }}>Bank Sampah Digital {userUnit ? `• Unit ${userUnit}` : ''}</p>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--ds-text-muted)', fontWeight: 500 }}>Bank Sampah Digital {userUnit ? (userUnit === 'Wonogiri' ? ' • PLTA Wonogiri' : (userUnit === 'Banjarnegara' ? ' • PLTA PB.Soedirman' : ' • Unit ' + userUnit)) : ''}</p>
             </div>
           </div>
           
