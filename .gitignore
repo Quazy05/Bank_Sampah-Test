@@ -11,3 +11,5 @@ create_log_table.js
 database_cleanup.js
 import_historical_data.js
 keperluan/
+
+.env.vercel
