@@ -323,7 +323,7 @@ export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
                 className={`filter-btn ${activeUnit === unit ? 'active' : ''}`}
                 onClick={() => setActiveUnit(unit)}
               >
-                {unit}
+                {unit === 'Wonogiri' ? 'PLTA Wonogiri' : (unit === 'Banjarnegara' ? 'PLTA PB.Soedirman' : unit)}
               </button>
             ))}
           </div>
