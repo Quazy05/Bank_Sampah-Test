@@ -47,6 +47,16 @@ export async function POST(request) {
       [depositId, date, time, user || null, client || null, unit || null, category, jenis, pengelola, weight, depositStatus, remarks || '']
     );
 
+    if (depositStatus === 'Terverifikasi') {
+      const month = date.substring(0, 7);
+      await query(
+        `INSERT INTO neraca_sampah (month, unit, category, jenis, timbulan, dimanfaatkan)
+         VALUES (?, ?, ?, ?, ?, 0)
+         ON DUPLICATE KEY UPDATE timbulan = timbulan + VALUES(timbulan)`,
+        [month, unit || '', category, jenis, weight]
+      );
+    }
+
     // Automatically insert activity log
     const timestamp = time.length === 5 ? `${date} ${time}:00` : `${date} ${time}`;
     const detailLog = `${category} (${jenis}) ${weight} kg - ${pengelola}`;

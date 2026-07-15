@@ -131,14 +131,15 @@ export async function PUT(request, { params }) {
       await query(
         `
         INSERT INTO neraca_sampah
-        (month, category, jenis, timbulan, dimanfaatkan)
-        VALUES (?, ?, ?, ?, 0)
+        (month, unit, category, jenis, timbulan, dimanfaatkan)
+        VALUES (?, ?, ?, ?, ?, 0)
 
         ON DUPLICATE KEY UPDATE
         timbulan = timbulan + VALUES(timbulan)
         `,
         [
           month,
+          data.unit,
           finalCategory,
           finalJenis,
           finalWeight
