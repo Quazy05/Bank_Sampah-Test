@@ -40,10 +40,13 @@ const DAFTAR_BULAN = [
   { id: '12', nama: 'Desember' }
 ];
 
-const PLNLogo = ({ size = 36 }) => {
-  const customLogoUrl = '/Logo.png';
+const PLNLogo = ({ size = 32, unit = '' }) => {
+  let customLogoUrl = '/Logo.png';
+  if (unit === 'Wonogiri') customLogoUrl = '/Logo PLTA WONOGIRI.png';
+  else if (unit === 'Banjarnegara') customLogoUrl = '/Logo PLTA PB. Soedirman.png';
+  
   if (customLogoUrl) {
-    return <img src={customLogoUrl} alt="Logo Powercycle" style={{ height: size, maxWidth: '100%', objectFit: 'contain' }} />;
+    return <img src={customLogoUrl} alt="Logo" style={{ height: size, maxWidth: '100%', objectFit: 'contain' }} />;
   }
   return null;
 };
@@ -646,7 +649,7 @@ const renderBuktiBayar = () => (
         boxShadow: '4px 0 30px rgba(0,0,0,0.15)'
       }}>
         <div style={{ padding: '24px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ background: 'white', padding: 6, borderRadius: 8, display: 'flex' }}><PLNLogo size={24} /></div>
+          <div style={{ background: 'white', padding: 6, borderRadius: 8, display: 'flex' }}><PLNLogo size={42} unit={userUnit} /></div>
           <div>
             <h1 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, lineHeight: 1.2, letterSpacing: '-0.5px' }}>Powercycle</h1>
             <p style={{ fontSize: '0.72rem', color: 'var(--ds-accent-light)', margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>User Portal • {userUnit === 'Wonogiri' ? 'PLTA Wonogiri' : (userUnit === 'Banjarnegara' ? 'PLTA PB.Soedirman' : userUnit || 'Pusat')}</p>

@@ -78,18 +78,18 @@ export default function LoginPage() {
       <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 440, padding: '24px 20px', boxSizing: 'border-box' }}>
         
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
             <div style={{ 
               background: 'white', 
-              padding: 10, 
-              borderRadius: '16px', 
+              padding: 16, 
+              borderRadius: '24px', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
-              boxShadow: '0 8px 30px rgba(8, 145, 178, 0.08)',
+              boxShadow: '0 12px 40px rgba(8, 145, 178, 0.1)',
               border: '1px solid var(--ds-border)'
             }}>
-               <PLNLogo size={42} />
+               <PLNLogo size={90} />
             </div>
           </div>
           <h1 style={{ color: 'var(--ds-text)', fontSize: '2.1rem', fontWeight: 800, margin: '0 0 6px 0', letterSpacing: '-1.5px' }}>

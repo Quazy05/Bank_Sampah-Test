@@ -33,10 +33,13 @@ function useCountUp(target, duration = 2000) {
   return count;
 }
 
-const PLNLogo = ({ size = 36 }) => {
-  const customLogoUrl = '/Logo.png';
+const PLNLogo = ({ size = 64, unit = '' }) => {
+  let customLogoUrl = '/Logo.png';
+  if (unit === 'Wonogiri') customLogoUrl = '/Logo PLTA WONOGIRI.png';
+  else if (unit === 'Banjarnegara') customLogoUrl = '/Logo PLTA PB. Soedirman.png';
+  
   if (customLogoUrl) {
-    return <img src={customLogoUrl} alt="Logo Powercycle" style={{ height: size, maxWidth: '100%', objectFit: 'contain' }} />;
+    return <img src={customLogoUrl} alt="Logo" style={{ height: size, maxWidth: '100%', objectFit: 'contain' }} />;
   }
   return null;
 };
@@ -129,7 +132,7 @@ export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
         <div className="header-inner">
           <a href="#hero" className="header-brand">
             <span className="header-logo-wrap">
-              <PLNLogo size={30} />
+              <PLNLogo size={42} unit={activeUnit} />
             </span>
             <span className="header-brand-text">
               <span className="brand-name">Powercycle</span>
@@ -522,7 +525,7 @@ export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
           <div className="footer-grid">
             <div className="footer-brand-col">
               <a href="#hero" className="footer-brand">
-                <PLNLogo size={28} />
+                <PLNLogo size={42} unit={activeUnit} />
                 <span className="footer-brand-text">
                   <span className="brand-name">Powercycle</span>
                   <span className="brand-tagline">Bank Sampah Digital</span>
