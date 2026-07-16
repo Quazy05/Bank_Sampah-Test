@@ -41,10 +41,10 @@ const PLNLogo = ({ size = 36 }) => {
   return null;
 };
 
-// Data lokasi untuk Map (Google Maps Embed URLs)
+// Data lokasi untuk Map (Google Maps Embed - titik lokasi PLTA)
 const MAP_LOCATIONS = [
-  { id: 'Wonogiri', name: 'PLTA Wonogiri', desc: 'Fokus pengelolaan sampah organik dan kompos.', embedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126466.86475659771!2d110.85244585149365!3d-7.86873111979929!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e7a2cf956b9bf7f%3A0xc48c08170c0cbf8!2sWonogiri%2C%20Wonogiri%20Regency%2C%20Central%20Java!5e0!3m2!1sen!2sid!4v1709191100000!5m2!1sen!2sid' },
-  { id: 'Banjarnegara', name: 'PLTA PB.Soedirman', desc: 'Pusat daur ulang sampah anorganik terbesar.', embedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126590.23190807812!2d109.61057404172412!3d-7.368817730999581!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e7aa07a0003058b%3A0x4027a76e3530a60!2sBanjarnegara%2C%20Banjarnegara%20Regency%2C%20Central%20Java!5e0!3m2!1sen!2sid!4v1709191200000!5m2!1sen!2sid' }
+  { id: 'Wonogiri', name: 'PLTA Wonogiri', embedUrl: 'https://maps.google.com/maps?q=-7.8687,110.8943&z=15&output=embed' },
+  { id: 'Banjarnegara', name: 'PLTA PB.Soedirman', embedUrl: 'https://maps.google.com/maps?q=-7.384139,109.617167&z=15&output=embed' }
 ];
 
 export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
@@ -74,7 +74,7 @@ export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
   const monthlyChartData = useMemo(() => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const data = months.map(m => ({ bulan: m, berat: 0 }));
-    
+
     currentFilteredDeposits.forEach(d => {
       const date = new Date(d.date);
       if (date.getFullYear() === new Date().getFullYear()) {
@@ -189,7 +189,7 @@ export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
             </h1>
 
             <p className="hero-description animate-fade-up delay-2">
-              Mengangkat semangat pengelolaan sampah yang berkelanjutan, 
+              Mengangkat semangat pengelolaan sampah yang berkelanjutan,
               terintegrasi, dan terukur dari wilayah PLTA Mrica, Banjarnegara.
             </p>
 
@@ -435,14 +435,14 @@ export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
                   <Navigation size={22} color="var(--ds-accent)" /> Unit Operasional
                 </h3>
                 <p style={{ fontSize: '0.9rem', color: 'var(--ds-text-muted)', margin: 0, lineHeight: 1.6 }}>Pilih unit di bawah ini untuk mengarahkan peta ke lokasi tersebut.</p>
-                
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
                   {MAP_LOCATIONS.map((loc) => {
                     const statsForLoc = unitStats.find(u => u.unit === loc.id);
                     const isActive = activeMapLoc.id === loc.id;
                     return (
-                      <div 
-                        key={loc.id} 
+                      <div
+                        key={loc.id}
                         className="map-loc-card"
                         onClick={() => setActiveMapLoc(loc)}
                         style={{
@@ -456,7 +456,7 @@ export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
                         <div style={{ fontWeight: 800, fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: 8, marginBottom: '10px' }}>
                           <MapPin size={18} color={isActive ? 'white' : 'var(--ds-accent)'} /> {loc.name}
                         </div>
-                        
+
                         {statsForLoc && (
                           <div style={{ display: 'flex', gap: '20px', borderTop: isActive ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(0,0,0,0.08)', paddingTop: '10px' }}>
                             <div>
@@ -478,13 +478,13 @@ export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
 
             {/* RIGHT: Google Map (larger) */}
             <div className="map-iframe-wrapper clay-card">
-              <iframe 
-                src={activeMapLoc.embedUrl} 
-                width="100%" 
-                height="100%" 
-                style={{ border: 0, borderRadius: '1.5rem' }} 
-                allowFullScreen="" 
-                loading="lazy" 
+              <iframe
+                src={activeMapLoc.embedUrl}
+                width="100%"
+                height="100%"
+                style={{ border: 0, borderRadius: '1.5rem' }}
+                allowFullScreen=""
+                loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 title={`Peta Lokasi ${activeMapLoc.name}`}
               />
