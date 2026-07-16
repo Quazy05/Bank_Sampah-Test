@@ -43,8 +43,8 @@ const PLNLogo = ({ size = 36 }) => {
 
 // Data lokasi untuk Map (Google Maps Embed - titik lokasi PLTA)
 const MAP_LOCATIONS = [
-  { id: 'Wonogiri', name: 'PLTA Wonogiri', embedUrl: 'https://maps.google.com/maps?q=-7.8687,110.8943&z=15&output=embed' },
-  { id: 'Banjarnegara', name: 'PLTA PB.Soedirman', embedUrl: 'https://maps.google.com/maps?q=-7.384139,109.617167&z=15&output=embed' }
+  { id: 'Wonogiri', name: 'PLTA Wonogiri', embedUrl: 'https://maps.google.com/maps?q=PLTA+Wonogiri&z=15&output=embed' },
+  { id: 'Banjarnegara', name: 'PLTA PB.Soedirman', embedUrl: 'https://maps.google.com/maps?q=PLTA+Mrica+Banjarnegara&z=15&output=embed' }
 ];
 
 export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
