@@ -58,9 +58,7 @@ export async function PUT(request, { params }) {
 
     const data = docSnap.data();
 
-    // =========================
-    // DATA DITOLAK
-    // =========================
+    // Data ditolak
     if (status === 'Ditolak') {
       await updateDoc(docRef, {
         status,
@@ -86,9 +84,7 @@ export async function PUT(request, { params }) {
       });
     }
 
-    // =========================
-    // DATA DIVERIFIKASI
-    // =========================
+    // Data diverifikasi
     if (status === 'Terverifikasi' || status === 'Tervalidasi') {
 
       const finalCategory = category || data.category;
@@ -100,9 +96,7 @@ export async function PUT(request, { params }) {
         `Divalidasi oleh: ${validator_name || 'Validator'}` +
         (data.remarks ? ` | ${data.remarks}` : '');
 
-      // ==================================================
-      // 1. SIMPAN KE TABEL DEPOSITS
-      // ==================================================
+      // Simpan ke tabel deposits
       await query(
         `INSERT INTO deposits
         (id, date, time, user, client, unit, category, jenis, pengelola, weight, status, remarks)
@@ -123,9 +117,7 @@ export async function PUT(request, { params }) {
         ]
       );
 
-      // ==================================================
-      // 2. UPDATE NERACA SAMPAH
-      // ==================================================
+      // Update neraca sampah
       const month = data.date.substring(0, 7);
 
       await query(
@@ -146,14 +138,10 @@ export async function PUT(request, { params }) {
         ]
       );
 
-      // ==================================================
-      // 3. HAPUS DARI FIREBASE
-      // ==================================================
+      // Hapus dari Firebase
       await deleteDoc(docRef);
 
-      // ==================================================
-      // 4. SIMPAN LOG
-      // ==================================================
+      // Simpan log aktivitas
       await query(
         `INSERT INTO activity_log
         (timestamp, user, action, detail, type)

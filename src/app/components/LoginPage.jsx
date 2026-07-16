@@ -96,7 +96,7 @@ export default function LoginPage() {
             Powercycle<span style={{ color: 'var(--ds-accent)' }}>.</span>
           </h1>
           <p style={{ color: 'var(--ds-text-muted)', fontSize: '0.9rem', margin: 0, fontWeight: 500 }}>
-            Bank Sampah Digital • PLTA Mrica
+            Bank Sampah Digital
           </p>
         </div>
 
@@ -173,15 +173,14 @@ export default function LoginPage() {
               onMouseDown={e => e.target.style.transform = 'scale(0.98)'}
               onMouseUp={e => e.target.style.transform = 'none'}
             >
-              Masuk Sistem <ArrowRight size={16} />
+              Masuk <ArrowRight size={16} />
             </button>
           </form>
           
-          <div style={{ marginTop: 24, textAlign: 'center', borderTop: '1px solid rgba(203, 213, 225, 0.4)', paddingTop: 20 }}>
-             <p style={{ color: 'var(--ds-text-muted)', fontSize: '0.78rem', margin: 0, lineHeight: 1.5 }}>
-               Gunakan nama pengguna <strong>'admin'</strong> untuk akses Dashboard Admin, atau <strong>'user'</strong> untuk akses Dashboard User.
-             </p>
-          </div>
+          <p style={{ color: 'var(--ds-text-muted)', fontSize: '0.78rem', margin: '20px 0 0 0', textAlign: 'center', fontWeight: 500 }}>
+            Unit Bisnis Pembangkitan Mrica
+          </p>
+
         </div>
 
         <div style={{ textAlign: 'center', marginTop: 24 }}>

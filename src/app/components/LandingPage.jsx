@@ -184,13 +184,14 @@ export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
             </div>
 
             <h1 className="hero-title animate-fade-up delay-1">
-              Kelola Sampah{' '}
-              <span className="hero-title-accent">Lestarikan Lingkungan.</span>
+              Pilah Sampah, Selamatkan Bumi{' '}
+              <span className="hero-title-accent">Kurangi, Gunakan Lagi, Daur Ulang.</span>
             </h1>
 
             <p className="hero-description animate-fade-up delay-2">
-              Mengangkat semangat pengelolaan sampah yang berkelanjutan,
-              terintegrasi, dan terukur dari wilayah PLTA Mrica, Banjarnegara.
+              PT PLN Indonesia Power UBP Mrica berupaya melakukan pengelolaan sampah yang
+              berkelanjutan, terukur dan terintegrasi untuk mendukung peningkatan target
+              pengelolaan sampah yang optimal.
             </p>
 
             <div className="hero-cta animate-fade-up delay-3">
@@ -265,7 +266,7 @@ export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
             </h2>
             <p className="section-subtitle">
               Powercycle adalah sistem bank sampah digital yang dikembangkan untuk mendukung
-              pengelolaan sampah di wilayah PLN Indonesia Power. Platform ini memudahkan pencatatan,
+              pengelolaan sampah di wilayah PLN Indonesia Power UBP Mrica. Platform ini memudahkan pencatatan,
               monitoring, dan pelaporan data sampah dari berbagai unit secara real-time.
             </p>
           </div>
@@ -529,7 +530,7 @@ export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
               </a>
               <p className="footer-desc">
                 Platform digital untuk pencatatan, monitoring, dan pelaporan pengelolaan
-                sampah yang terintegrasi di wilayah PLN Indonesia Power.
+                sampah yang terintegrasi di wilayah PLN Indonesia Power UBP Mrica.
               </p>
             </div>
 
