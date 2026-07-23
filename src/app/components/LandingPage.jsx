@@ -560,15 +560,15 @@ export default function LandingPage({ initialDeposits = [], mockUsers = [], pema
               <ul className="footer-contact-list">
                 <li>
                   <MapPin size={16} className="footer-contact-icon" />
-                  <span>PLTA Mrica, Jawa Tengah</span>
+                  <span>PLTA Indonesia Power UBP Mrica, Jawa Tengah</span>
                 </li>
                 <li>
                   <Phone size={16} className="footer-contact-icon" />
-                  <span>(0286) 123456</span>
+                  <span>62-21-5267666</span>
                 </li>
                 <li>
                   <Mail size={16} className="footer-contact-icon" />
-                  <span>banksampah@pltamrica.co.id</span>
+                  <span>admin.eproc@plnindonesiapower.co.id</span>
                 </li>
               </ul>
             </div>
