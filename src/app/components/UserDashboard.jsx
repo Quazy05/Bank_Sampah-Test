@@ -1,9 +1,10 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, Fragment } from 'react';
 import {
   LayoutDashboard, PlusCircle, History, Database,
   FileCheck, BarChart2, LogOut, Trash2, Calendar,
-  Clock, Package, MapPin, Scale, Info, Menu, X, Upload, Eye, Maximize2, Download
+  Clock, Package, MapPin, Scale, Info, Menu, X, Upload, Eye, Maximize2, Download, Share2,
+  FolderKanban, ClipboardList, ArrowLeft, CheckCircle2, Link2, Copy, ExternalLink
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
@@ -121,7 +122,7 @@ export function UserDashboard({ deposits, neraca, buktiBayar, masterJenis, maste
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [selectedBulan, setSelectedBulan] = useState('2026-06');
   const [selectedTahun, setSelectedTahun] = useState('2026');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [generatedQr, setGeneratedQr] = useState(null);
@@ -132,6 +133,26 @@ export function UserDashboard({ deposits, neraca, buktiBayar, masterJenis, maste
   const [riwayatFilter, setRiwayatFilter] = useState('semua');
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  
+  const [programsData, setProgramsData] = useState([]);
+  const [selectedProgramData, setSelectedProgramData] = useState(null);
+  const [programFormValues, setProgramFormValues] = useState({});
+  const [loadingPrograms, setLoadingPrograms] = useState(false);
+
+  useEffect(() => {
+    if (currentPage === 'input-program' && programsData.length === 0) {
+      setLoadingPrograms(true);
+      fetch('/api/programs')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setProgramsData(data.data);
+          }
+        })
+        .catch(console.error)
+        .finally(() => setLoadingPrograms(false));
+    }
+  }, [currentPage, programsData.length]);
   
   const [formData, setFormData] = useState({
     date: TODAY, time: new Date().toTimeString().slice(0, 5),
@@ -144,6 +165,16 @@ export function UserDashboard({ deposits, neraca, buktiBayar, masterJenis, maste
     }
     return OPSI_JENIS_SAMPAH[formData.kategori] || [];
   }, [masterJenis, formData.kategori]);
+
+  const [programKategori, setProgramKategori] = useState('');
+  const [programJenis, setProgramJenis] = useState('');
+
+  const programOpsiJenisLokal = useMemo(() => {
+    if (masterJenis && masterJenis.length > 0) {
+      return masterJenis.filter(j => j.kategori === programKategori).map(j => j.nama_jenis);
+    }
+    return OPSI_JENIS_SAMPAH[programKategori] || [];
+  }, [masterJenis, programKategori]);
 
   const opsiPengelolaLokal = useMemo(() => {
     if (masterPengelola && masterPengelola.length > 0) {
@@ -196,7 +227,108 @@ export function UserDashboard({ deposits, neraca, buktiBayar, masterJenis, maste
     setShowConfirmPopup(true);
   };
 
-  // Handler untuk mengedit data setoran
+  const handleDownloadQR = () => {
+    const svg = document.getElementById('qr-code-svg');
+    if (!svg) return;
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    canvas.width = 240;
+    canvas.height = 240;
+    
+    img.onload = () => {
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 20, 20, 200, 200); // 20px padding
+      
+      const pngFile = canvas.toDataURL("image/png");
+      const downloadLink = document.createElement("a");
+      downloadLink.download = `QR-Setoran-${generatedQr}.png`;
+      downloadLink.href = pngFile;
+      downloadLink.click();
+    };
+    img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+  };
+
+  const handleShareQR = () => {
+    const svg = document.getElementById('qr-code-svg');
+    if (!svg) return;
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    
+    canvas.width = 240;
+    canvas.height = 240;
+    
+    img.onload = () => {
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 20, 20, 200, 200);
+      
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob], `QR-Setoran-${generatedQr}.png`, { type: 'image/png' });
+        
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: 'QR Code Setoran',
+              text: `Ini QR Code setoran sampah saya (${generatedQr}).`,
+              files: [file]
+            });
+          } catch (error) {
+            console.error('Error sharing:', error);
+          }
+        } else {
+          alert("Browser Anda tidak mendukung fitur share gambar. Silakan gunakan tombol Download.");
+        }
+      }, 'image/png');
+    };
+    img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+  };
+
+  const getValidationUrl = () => {
+    const baseUrl = process.env.NEXT_PUBLIC_VALIDASI_URL || 'https://powercycle-web-validator.vercel.app/validator/verify/{id}';
+    return baseUrl.replace('{id}', generatedQr || '');
+  };
+
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const handleCopyLink = async () => {
+    const url = getValidationUrl();
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      const textArea = document.createElement('textarea');
+      textArea.value = url;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    }
+  };
+
+  const handleShareLink = async () => {
+    const url = getValidationUrl();
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Link Validasi Setoran Sampah',
+          text: `Silakan validasi setoran sampah ini:`,
+          url: url
+        });
+      } catch (error) {
+        console.error('Error sharing link:', error);
+      }
+    } else {
+      handleCopyLink();
+    }
+  };
   const handleEdit = (deposit) => {
     setEditingId(deposit.id);
     setFormData({
@@ -214,12 +346,11 @@ export function UserDashboard({ deposits, neraca, buktiBayar, masterJenis, maste
     const depData = {
       date: formData.date, time: formData.time, user: username,
       unit: userUnit, category: formData.kategori, jenis: formData.jenis,
-      pengelola: formData.pengelola, weight: parseFloat(formData.berat),
+      pengelola: formData.pengelola, weight: parseFloat(String(formData.berat).replace(',', '.')),
       status: 'Menunggu Validasi'
     };
 
-    if (editingId) {
-      // Update data setoran jika dalam mode edit
+    if (editingId) {
       await onUpdateDeposit(editingId, depData); 
       setEditingId(null);
       setFormData({ date: TODAY, time: new Date().toTimeString().slice(0, 5), kategori: 'Organik', jenis: '', pengelola: '', berat: '' });
@@ -231,9 +362,7 @@ export function UserDashboard({ deposits, neraca, buktiBayar, masterJenis, maste
       }
     }
     setShowConfirmPopup(false);
-  };
-
-  // Handler untuk mengunggah kwitansi per bulan
+  };
   const handleUploadKwitansiPerBulan = (e, bulanId) => {
     const file = e.target.files[0];
     if (file) {
@@ -255,9 +384,7 @@ export function UserDashboard({ deposits, neraca, buktiBayar, masterJenis, maste
 
   const handleDeleteBukti = async (id) => {
   try {
-    const res = await fetch(`/api/bukti/${id}`, { method: 'DELETE' });
-    
-    // Proses penghapusan data bukti bayar
+    const res = await fetch(`/api/bukti/${id}`, { method: 'DELETE' });
     if (!res.ok) {
        const errData = await res.json().catch(() => ({ error: 'Unknown Error' }));
        throw new Error(errData.error || 'Gagal menghapus');
@@ -276,6 +403,7 @@ export function UserDashboard({ deposits, neraca, buktiBayar, masterJenis, maste
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'input', label: 'Input Sampah', icon: PlusCircle },
+    { id: 'input-program', label: 'Input Program', icon: ClipboardList },
     { id: 'riwayat', label: 'Riwayat', icon: History },
     { id: 'neraca', label: 'Neraca Sampah', icon: Database },
     { id: 'bukti-bayar', label: 'Bukti Bayar', icon: FileCheck },
@@ -324,17 +452,31 @@ export function UserDashboard({ deposits, neraca, buktiBayar, masterJenis, maste
             </thead>
             <tbody>
               {dashboardFilteredDeposits.slice(0, 5).map((d, i) => (
-                <tr key={d.id} style={{ borderBottom: '1px solid rgba(203, 213, 225, 0.4)', background: i % 2 === 0 ? 'white' : '#FAFCFD' }}>
-                  <td style={{ padding: '14px 18px', fontSize: '0.85rem', color: 'var(--ds-text)' }}>{d.date}</td>
-                  <td style={{ padding: '14px 18px' }}>
-                    <span style={{ background: d.category === 'Organik' ? 'rgba(16, 185, 129, 0.08)' : d.category === 'Anorganik' ? 'rgba(8, 145, 178, 0.08)' : 'rgba(245, 158, 11, 0.08)', color: d.category === 'Organik' ? '#047857' : d.category === 'Anorganik' ? '#0891B2' : '#b45309', padding: '4px 10px', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 700 }}>
-                      {d.category}
-                    </span>
-                  </td>
-                  <td style={{ padding: '14px 18px', fontSize: '0.85rem', color: 'var(--ds-text)' }}>{d.jenis}</td>
-                  <td style={{ padding: '14px 18px', fontSize: '0.85rem', fontWeight: 700, color: 'var(--ds-text)' }}>{formatWeight(Number(d.weight) || 0)}</td>
-                  <td style={{ padding: '14px 18px' }}><StatusBadge status={d.status} /></td>
-                </tr>
+                <Fragment key={`${d.id}-${i}`}>
+                  <tr style={{ borderBottom: d.status === 'Ditolak' && d.remarks ? 'none' : '1px solid rgba(203, 213, 225, 0.4)', background: i % 2 === 0 ? 'white' : '#FAFCFD' }}>
+                    <td style={{ padding: '14px 18px', fontSize: '0.85rem', color: 'var(--ds-text)' }}>{d.date}</td>
+                    <td style={{ padding: '14px 18px' }}>
+                      <span style={{ background: d.category === 'Organik' ? 'rgba(16, 185, 129, 0.08)' : d.category === 'Anorganik' ? 'rgba(8, 145, 178, 0.08)' : 'rgba(245, 158, 11, 0.08)', color: d.category === 'Organik' ? '#047857' : d.category === 'Anorganik' ? '#0891B2' : '#b45309', padding: '4px 10px', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 700 }}>
+                        {d.category}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 18px', fontSize: '0.85rem', color: 'var(--ds-text)' }}>{d.jenis}</td>
+                    <td style={{ padding: '14px 18px', fontSize: '0.85rem', fontWeight: 700, color: 'var(--ds-text)' }}>{formatWeight(Number(d.weight) || 0)}</td>
+                    <td style={{ padding: '14px 18px' }}><StatusBadge status={d.status} /></td>
+                  </tr>
+                  {d.status === 'Ditolak' && d.remarks && (
+                    <tr style={{ background: i % 2 === 0 ? 'white' : '#FAFCFD', borderBottom: '1px solid rgba(203, 213, 225, 0.4)' }}>
+                      <td colSpan="5" style={{ padding: '0px 18px 14px 18px' }}>
+                        <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', padding: '10px 14px', borderRadius: 8, fontSize: '0.8rem', color: '#991B1B', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                          <Info size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+                          <div>
+                            <strong>Catatan Penolakan:</strong> {d.remarks}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
               {dashboardFilteredDeposits.length === 0 && (
                 <tr>
@@ -416,7 +558,10 @@ export function UserDashboard({ deposits, neraca, buktiBayar, masterJenis, maste
 
         <div>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ds-text)', fontSize: '0.85rem', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}><Scale size={16} /> Berat (Kg)</label>
-          <input type="number" step="0.1" value={formData.berat} onChange={e => setFormData({ ...formData, berat: e.target.value })} placeholder="Masukkan berat sampah dalam Kg" required style={{ width: '100%', padding: '12px 14px', border: '1.5px solid var(--ds-border)', borderRadius: 10, fontSize: '1rem', outline: 'none', boxSizing: 'border-box', color: 'var(--ds-text)', fontFamily: 'inherit', background: '#F8FAFC' }} />
+          <input type="text" inputMode="decimal" value={formData.berat} onChange={e => {
+            const val = e.target.value;
+            if (/^[0-9.,]*$/.test(val)) setFormData({ ...formData, berat: val });
+          }} placeholder="Masukkan berat sampah dalam Kg" required style={{ width: '100%', padding: '12px 14px', border: '1.5px solid var(--ds-border)', borderRadius: 10, fontSize: '1rem', outline: 'none', boxSizing: 'border-box', color: 'var(--ds-text)', fontFamily: 'inherit', background: '#F8FAFC' }} />
         </div>
 
         <div style={{ background: '#F1F5F9', padding: 18, borderRadius: 12, display: 'flex', gap: 12, alignItems: 'flex-start', marginTop: 8 }}>
@@ -467,40 +612,64 @@ export function UserDashboard({ deposits, neraca, buktiBayar, masterJenis, maste
           </thead>
           <tbody>
             {riwayatFilteredDeposits.map((d, i) => (
-              <tr key={d.id} style={{ borderBottom: '1px solid rgba(203, 213, 225, 0.4)', background: i % 2 === 0 ? 'white' : '#FAFCFD' }}>
-                <td style={{ padding: '14px 18px', fontSize: '0.85rem', color: 'var(--ds-text)' }}>{d.date} <span style={{ color: 'var(--ds-text-muted)', fontSize: '0.8rem' }}>{d.time}</span></td>
-                <td style={{ padding: '14px 18px' }}>
-                  <span style={{ background: d.category === 'Organik' ? 'rgba(16, 185, 129, 0.08)' : d.category === 'Anorganik' ? 'rgba(8, 145, 178, 0.08)' : 'rgba(245, 158, 11, 0.08)', color: d.category === 'Organik' ? '#047857' : d.category === 'Anorganik' ? '#0891B2' : '#b45309', padding: '4px 10px', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 700 }}>
-                    {d.category}
-                  </span>
-                </td>
-                <td style={{ padding: '14px 18px', fontSize: '0.85rem', color: 'var(--ds-text)' }}>{d.jenis}</td>
-                <td style={{ padding: '14px 18px', fontSize: '0.85rem', color: 'var(--ds-text)' }}>{d.pengelola}</td>
-                <td style={{ padding: '14px 18px', fontSize: '0.85rem', fontWeight: 700, color: 'var(--ds-text)' }}>{formatWeight(Number(d.weight) || 0)}</td>
-                <td style={{ padding: '14px 18px' }}><StatusBadge status={d.status} /></td>
-                <td style={{ padding: '14px 18px', textAlign: 'right' }}>
-                  {(d.status === 'Pending' || d.status === 'Menunggu Validasi') && (
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                      <button onClick={() => setGeneratedQr(d.id)} style={{ background: '#E0F2FE', color: '#0284C7', border: 'none', padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700, transition: 'all 0.2s' }}
-                        onMouseEnter={e => e.target.style.background = '#BAE6FD'}
-                        onMouseLeave={e => e.target.style.background = '#E0F2FE'}
-                      >
-                        Lihat QR
-                      </button>
-                      <button onClick={() => {
-                        if(window.confirm('Hapus data transaksi ini?')) {
-                          onDeleteDeposit(d.id, d.status);
-                        }
-                      }} style={{ background: '#FEE2E2', color: '#EF4444', border: 'none', padding: 8, borderRadius: 8, cursor: 'pointer', display: 'inline-flex', transition: 'all 0.2s' }}
-                        onMouseEnter={e => e.target.style.background = '#FCA5A5'}
-                        onMouseLeave={e => e.target.style.background = '#FEE2E2'}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  )}
-                </td>
-              </tr>
+              <Fragment key={`${d.id}-${i}`}>
+                <tr style={{ borderBottom: d.status === 'Ditolak' && d.remarks ? 'none' : '1px solid rgba(203, 213, 225, 0.4)', background: i % 2 === 0 ? 'white' : '#FAFCFD' }}>
+                  <td style={{ padding: '14px 18px', fontSize: '0.85rem', color: 'var(--ds-text)' }}>{d.date} <span style={{ color: 'var(--ds-text-muted)', fontSize: '0.8rem' }}>{d.time}</span></td>
+                  <td style={{ padding: '14px 18px' }}>
+                    <span style={{ background: d.category === 'Organik' ? 'rgba(16, 185, 129, 0.08)' : d.category === 'Anorganik' ? 'rgba(8, 145, 178, 0.08)' : 'rgba(245, 158, 11, 0.08)', color: d.category === 'Organik' ? '#047857' : d.category === 'Anorganik' ? '#0891B2' : '#b45309', padding: '4px 10px', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 700 }}>
+                      {d.category}
+                    </span>
+                  </td>
+                  <td style={{ padding: '14px 18px', fontSize: '0.85rem', color: 'var(--ds-text)' }}>{d.jenis}</td>
+                  <td style={{ padding: '14px 18px', fontSize: '0.85rem', color: 'var(--ds-text)' }}>{d.pengelola}</td>
+                  <td style={{ padding: '14px 18px', fontSize: '0.85rem', fontWeight: 700, color: 'var(--ds-text)' }}>{formatWeight(Number(d.weight) || 0)}</td>
+                  <td style={{ padding: '14px 18px' }}><StatusBadge status={d.status} /></td>
+                  <td style={{ padding: '14px 18px', textAlign: 'right' }}>
+                    {(d.status === 'Pending' || d.status === 'Menunggu Validasi') && (
+                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                        <button onClick={() => setGeneratedQr(d.id)} style={{ background: '#E0F2FE', color: '#0284C7', border: 'none', padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700, transition: 'all 0.2s' }}
+                          onMouseEnter={e => e.target.style.background = '#BAE6FD'}
+                          onMouseLeave={e => e.target.style.background = '#E0F2FE'}
+                        >
+                          Lihat QR
+                        </button>
+                        <button onClick={() => {
+                          if(window.confirm('Hapus data transaksi ini?')) {
+                            onDeleteDeposit(d.id, d.status);
+                          }
+                        }} style={{ background: '#FEE2E2', color: '#EF4444', border: 'none', padding: 8, borderRadius: 8, cursor: 'pointer', display: 'inline-flex', transition: 'all 0.2s' }}
+                          onMouseEnter={e => e.target.style.background = '#FCA5A5'}
+                          onMouseLeave={e => e.target.style.background = '#FEE2E2'}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
+                    {d.status === 'Ditolak' && (
+                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                        <button onClick={() => handleEdit(d)} style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700, transition: 'all 0.2s' }}
+                          onMouseEnter={e => e.target.style.background = '#FEE2E2'}
+                          onMouseLeave={e => e.target.style.background = '#FEF2F2'}
+                        >
+                          Edit & Kirim Ulang
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+                {d.status === 'Ditolak' && d.remarks && (
+                  <tr style={{ background: i % 2 === 0 ? 'white' : '#FAFCFD', borderBottom: '1px solid rgba(203, 213, 225, 0.4)' }}>
+                    <td colSpan="7" style={{ padding: '0px 18px 14px 18px' }}>
+                      <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', padding: '10px 14px', borderRadius: 8, fontSize: '0.8rem', color: '#991B1B', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                        <Info size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+                        <div>
+                          <strong>Catatan Penolakan:</strong> {d.remarks}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             ))}
             {riwayatFilteredDeposits.length === 0 && (
               <tr>
@@ -627,6 +796,144 @@ const renderBuktiBayar = () => (
   </div>
 );
 
+  const renderInputProgram = () => {
+    if (selectedProgramData) {
+      return (
+        <div style={{ maxWidth: 700, margin: '0 auto', background: 'white', borderRadius: '1.5rem', padding: '36px 32px', boxShadow: '0 10px 30px rgba(8, 145, 178, 0.03)', border: '1px solid var(--ds-border)' }}>
+          <button onClick={() => { setSelectedProgramData(null); setProgramFormValues({}); }} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'transparent', border: 'none', color: 'var(--ds-text-muted)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, marginBottom: 24, padding: 0 }}>
+            <ArrowLeft size={16} /> Kembali ke Daftar Program
+          </button>
+          
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--ds-border)' }}>
+            <div style={{ background: 'var(--ds-accent)', color: 'white', padding: 12, borderRadius: 12 }}>
+              <FolderKanban size={24} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--ds-text)', margin: '0 0 4px 0', letterSpacing: '-0.5px' }}>{selectedProgramData.nama}</h3>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--ds-text-muted)', lineHeight: 1.5 }}>{selectedProgramData.deskripsi}</p>
+            </div>
+          </div>
+          
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            try {
+              const res = await fetch('/api/input-program', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  user: username,
+                  unit: userUnit,
+                  program_name: selectedProgramData.nama,
+                  date: formData.date,
+                  time: formData.time,
+                  kategori_sampah: programKategori,
+                  jenis_sampah: programJenis,
+                  form_data: programFormValues
+                })
+              });
+              const result = await res.json();
+              if (result.success) {
+                alert('Data program berhasil disimpan!');
+                setSelectedProgramData(null);
+                setProgramFormValues({});
+              } else {
+                alert('Gagal menyimpan data: ' + result.error);
+              }
+            } catch (err) {
+              console.error(err);
+              alert('Terjadi kesalahan sistem.');
+            }
+          }} style={{ display: 'grid', gap: 20 }}>
+            
+            <div className="form-grid-2" style={{ gap: 20 }}>
+              <div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ds-text)', fontSize: '0.85rem', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}><Calendar size={16} /> Tanggal</label>
+                <input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} required style={{ width: '100%', padding: '11px 14px', border: '1.5px solid var(--ds-border)', borderRadius: 10, fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box', background: '#F8FAFC', color: 'var(--ds-text)', fontFamily: 'inherit' }} />
+              </div>
+              <div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ds-text)', fontSize: '0.85rem', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}><Clock size={16} /> Waktu</label>
+                <input type="time" value={formData.time} onChange={e => setFormData({ ...formData, time: e.target.value })} required style={{ width: '100%', padding: '11px 14px', border: '1.5px solid var(--ds-border)', borderRadius: 10, fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box', background: '#F8FAFC', color: 'var(--ds-text)', fontFamily: 'inherit' }} />
+              </div>
+            </div>
+
+            <div className="form-grid-2" style={{ gap: 20 }}>
+              <div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ds-text)', fontSize: '0.85rem', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}><Package size={16} /> Kategori Sampah</label>
+                <select value={programKategori} onChange={e => { setProgramKategori(e.target.value); setProgramJenis(''); }} required style={{ width: '100%', padding: '11px 14px', border: '1.5px solid var(--ds-border)', borderRadius: 10, fontSize: '0.9rem', outline: 'none', background: '#F8FAFC', color: 'var(--ds-text)', fontFamily: 'inherit', cursor: 'pointer' }}>
+                  <option value="">-- Pilih Kategori --</option>
+                  {KATEGORI_SAMPAH.map(k => <option key={k} value={k}>{k}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ds-text)', fontSize: '0.85rem', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}><Package size={16} /> Jenis Sampah</label>
+                <select value={programJenis} onChange={e => setProgramJenis(e.target.value)} required style={{ width: '100%', padding: '11px 14px', border: '1.5px solid var(--ds-border)', borderRadius: 10, fontSize: '0.9rem', outline: 'none', background: '#F8FAFC', color: 'var(--ds-text)', fontFamily: 'inherit', cursor: 'pointer' }} disabled={!programKategori}>
+                  <option value="">-- Pilih Jenis --</option>
+                  {programOpsiJenisLokal.map(j => <option key={j} value={j}>{j}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {selectedProgramData.fields.map(field => {
+              const hasKg = /kg/i.test(field.label);
+              const displayLabel = hasKg ? field.label : `${field.label} (Kg)`;
+              const placeholder = hasKg ? `Masukkan ${field.label.toLowerCase()}` : `Masukkan ${field.label.toLowerCase()} dalam satuan Kg`;
+              return (
+              <div key={field.id}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ds-text)', fontSize: '0.85rem', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}><CheckCircle2 size={16} /> {displayLabel}</label>
+                <input type={field.type} step="0.1" value={programFormValues[field.id] || ''} onChange={e => setProgramFormValues({ ...programFormValues, [field.id]: e.target.value })} placeholder={placeholder} required style={{ width: '100%', padding: '12px 14px', border: '1.5px solid var(--ds-border)', borderRadius: 10, fontSize: '1rem', outline: 'none', boxSizing: 'border-box', color: 'var(--ds-text)', fontFamily: 'inherit', background: '#F8FAFC' }} />
+              </div>
+              );
+            })}
+            
+            <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+              <button type="submit" style={{ flex: 1, padding: '14px', background: 'var(--ds-text)', color: 'white', border: 'none', borderRadius: '9999px', fontSize: '0.95rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}
+                onMouseEnter={e => e.target.style.background = 'var(--ds-accent)'}
+                onMouseLeave={e => e.target.style.background = 'var(--ds-text)'}>
+                Simpan Data
+              </button>
+            </div>
+          </form>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ background: 'white', borderRadius: '1.5rem', padding: 24, boxShadow: '0 10px 30px rgba(8, 145, 178, 0.03)', border: '1px solid var(--ds-border)' }}>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--ds-text)', marginBottom: 8, letterSpacing: '-0.5px' }}>Pilih Program Pemanfaatan</h3>
+        <p style={{ color: 'var(--ds-text-muted)', fontSize: '0.9rem', marginBottom: 24 }}>Pilih salah satu program dari daftar di bawah ini untuk mulai mengisi data nilai pemanfaatan.</p>
+        
+        {loadingPrograms ? (
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--ds-text-muted)' }}>Memuat daftar program...</div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+            {programsData.map(prog => (
+              <div key={prog.id} onClick={() => setSelectedProgramData(prog)}
+                style={{
+                  border: '1px solid var(--ds-border)', borderRadius: 16, padding: 20,
+                  cursor: 'pointer', transition: 'all 0.2s', background: '#FAFCFD',
+                  display: 'flex', flexDirection: 'column', gap: 12
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--ds-accent)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(8, 145, 178, 0.1)'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--ds-border)'; e.currentTarget.style.boxShadow = 'none'; }}
+              >
+                <div style={{ background: 'rgba(8, 145, 178, 0.1)', width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ds-accent)' }}>
+                  <FolderKanban size={24} />
+                </div>
+                <div>
+                  <h4 style={{ margin: '0 0 6px 0', fontSize: '1.05rem', fontWeight: 800, color: 'var(--ds-text)' }}>{prog.nama}</h4>
+                  <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--ds-text-muted)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{prog.deskripsi || 'Tidak ada deskripsi'}</p>
+                </div>
+                <div style={{ marginTop: 'auto', paddingTop: 12, borderTop: '1px dashed rgba(203, 213, 225, 0.6)' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--ds-accent)' }}>Pilih Program →</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--ds-bg)', fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" }}>
       {sidebarOpen && (
@@ -643,9 +950,9 @@ const renderBuktiBayar = () => (
         />
       )}
 
-      <div className="sidebar-container" style={{
+      <div className={`sidebar-container ${!sidebarOpen ? 'closed' : ''} ${sidebarOpen ? 'open' : ''}`} style={{
         width: 260, background: 'var(--ds-dark)', color: 'white', display: 'flex', flexDirection: 'column',
-        position: 'fixed', top: 0, bottom: 0, zIndex: 50, transition: 'left 0.3s ease',
+        position: 'fixed', top: 0, bottom: 0, zIndex: 50,
         boxShadow: '4px 0 30px rgba(0,0,0,0.15)'
       }}>
         <div style={{ padding: '24px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -661,7 +968,10 @@ const renderBuktiBayar = () => (
             const Icon = item.icon;
             const isActive = currentPage === item.id;
             return (
-              <button key={item.id} onClick={() => { setCurrentPage(item.id); setSidebarOpen(false); }}
+              <button key={item.id} onClick={() => { 
+                setCurrentPage(item.id); 
+                if (window.innerWidth <= 1024) setSidebarOpen(false); 
+              }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
                   background: isActive ? 'rgba(8, 145, 178, 0.15)' : 'transparent', border: 'none', borderRadius: 12,
@@ -677,10 +987,10 @@ const renderBuktiBayar = () => (
         </div>
       </div>
 
-      <div className="main-content" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: '100vh', transition: 'margin 0.3s ease' }}>
+      <div className={`main-content ${!sidebarOpen ? 'sidebar-closed' : ''}`} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: '100vh', transition: 'margin 0.3s ease' }}>
         <header style={{ background: 'white', padding: '16px 28px', borderBottom: '1px solid var(--ds-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 40 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--ds-text)', display: 'none' }}>
+            <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--ds-text)' }}>
               <Menu size={24} />
             </button>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -712,6 +1022,7 @@ const renderBuktiBayar = () => (
         <main style={{ padding: 28, flex: 1 }}>
           {currentPage === 'dashboard' && renderDashboard()}
           {currentPage === 'input' && renderInput()}
+          {currentPage === 'input-program' && renderInputProgram()}
           {currentPage === 'riwayat' && renderRiwayat()}
           {currentPage === 'neraca' && renderNeraca()}
           {currentPage === 'bukti-bayar' && renderBuktiBayar()}
@@ -725,7 +1036,7 @@ const renderBuktiBayar = () => (
         </main>
       </div>
 
-      {/* Pop-up Detail Kwitansi User */}
+      
 {activeKwitansiPopup && (
   <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(12, 26, 46, 0.6)', backdropFilter: 'blur(4px)', animation: 'fadeIn 0.2s ease-out' }}>
     <div style={{ background: 'white', width: '100%', maxWidth: 440, borderRadius: '1.5rem', padding: 32, boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
@@ -737,7 +1048,7 @@ const renderBuktiBayar = () => (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
         <div style={{ fontSize: '0.85rem' }}>No. Bukti: <strong>{activeKwitansiPopup.no_bukti}</strong></div>
         
-        {/* Kontainer Gambar dengan tombol Fullscreen & Download */}
+        
         <div style={{ position: 'relative', width: '100%', borderRadius: 12, overflow: 'hidden', border: '1px solid #e2e8f0', background: '#F8FAFC' }}>
           <img 
             src={activeKwitansiPopup.img_url} 
@@ -764,7 +1075,7 @@ const renderBuktiBayar = () => (
   </div>
 )}
 
-{/* Lightbox Fullscreen */}
+
 {fullImage && (
   <div onClick={() => setFullImage(null)} style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
     <img src={fullImage} style={{ maxWidth: '95%', maxHeight: '95%', objectFit: 'contain' }} />
@@ -862,14 +1173,24 @@ const renderBuktiBayar = () => (
         <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(12, 26, 46, 0.6)', backdropFilter: 'blur(4px)', animation: 'fadeIn 0.2s ease-out' }}>
           <div style={{ background: 'white', width: '100%', maxWidth: 360, borderRadius: '1.5rem', padding: 32, boxShadow: '0 20px 40px rgba(0,0,0,0.1)', animation: 'scaleUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)', textAlign: 'center' }}>
             <h3 style={{ margin: '0 0 16px', fontSize: '1.25rem', fontWeight: 800, color: 'var(--ds-text)', letterSpacing: '-0.5px' }}>Tunjukkan QR Code</h3>
-            <p style={{ margin: '0 0 24px', color: 'var(--ds-text-muted)', fontSize: '0.9rem' }}>Silakan tunjukkan QR Code ini kepada Petugas Verifikasi untuk divalidasi.</p>
+            <p style={{ margin: '0 0 24px', color: 'var(--ds-text-muted)', fontSize: '0.9rem' }}>Silakan tunjukkan QR Code ini kepada Petugas Verifikasi di Website Validasi untuk divalidasi.</p>
             
             <div style={{ background: 'white', padding: 16, border: '1px solid var(--ds-border)', borderRadius: 16, display: 'inline-block', marginBottom: 24, boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
-              <QRCodeSVG value={`${window.location.origin}/validator/verify/${generatedQr}`} size={200} />
+              <QRCodeSVG id="qr-code-svg" value={getValidationUrl()} size={200} />
             </div>
             
+            <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+              <button onClick={handleDownloadQR} style={{ flex: 1, padding: '12px', background: 'white', color: 'var(--ds-text)', border: '1.5px solid var(--ds-border)', borderRadius: '12px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
+                <Download size={18} /> Download QR
+              </button>
+              <button onClick={handleShareLink} style={{ flex: 1, padding: '12px', background: 'white', color: 'var(--ds-text)', border: '1.5px solid var(--ds-border)', borderRadius: '12px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
+                <Share2 size={18} /> Share Link
+              </button>
+            </div>
+
+
             <div style={{ display: 'flex', gap: 12 }}>
-              <button onClick={() => { setGeneratedQr(null); setCurrentPage('riwayat'); }} style={{ flex: 1, padding: '14px', background: 'var(--ds-accent)', color: 'white', border: 'none', borderRadius: '9999px', fontSize: '0.95rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}
+              <button onClick={() => { setGeneratedQr(null); setLinkCopied(false); setCurrentPage('riwayat'); }} style={{ flex: 1, padding: '14px', background: 'var(--ds-accent)', color: 'white', border: 'none', borderRadius: '12px', fontSize: '0.95rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}
                 onMouseEnter={e => e.target.style.background = 'var(--ds-accent-light)'}
                 onMouseLeave={e => e.target.style.background = 'var(--ds-accent)'}
               >Selesai</button>

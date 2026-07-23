@@ -50,7 +50,7 @@ const MAP_LOCATIONS = [
   { id: 'Banjarnegara', name: 'PLTA PB.Soedirman', embedUrl: 'https://maps.google.com/maps?q=PLTA+Mrica+Banjarnegara&z=15&output=embed' }
 ];
 
-export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
+export default function LandingPage({ initialDeposits = [], mockUsers = [], pemanfaatanData = [] }) {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -111,7 +111,15 @@ export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
       const nasabah = mockUsers.filter(u => u.unit === unit && u.role === 'User').length;
       return { unit, totalWeight, totalTransactions, nasabah };
     });
-  }, [initialDeposits, mockUsers]);
+  }, [currentFilteredDeposits, activeUnit, mockUsers]);
+
+  const pemanfaatanStats = useMemo(() => {
+    return {
+      totalInput: pemanfaatanData.length,
+      totalPrograms: new Set(pemanfaatanData.map(d => d.program_name)).size,
+      totalUnits: new Set(pemanfaatanData.map(d => d.unit)).size
+    };
+  }, [pemanfaatanData]);
 
   const pieData = [
     { name: 'Organik', value: +Number(stats.organikWeight).toFixed(1), color: '#10B981' },
@@ -149,9 +157,9 @@ export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
           </nav>
 
           <div className="header-actions">
-            <button className="btn-login" onClick={() => router.push('/login')}>
+            <a href="/login" className="btn-login">
               Masuk <ArrowRight size={16} />
-            </button>
+            </a>
             <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -166,9 +174,9 @@ export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
           <a href="#statistik" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Statistik</a>
           <a href="#unit" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Unit</a>
           <a href="#kontak" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Kontak</a>
-          <button className="btn-login mobile" onClick={() => router.push('/login')}>
+          <a href="/login" className="btn-login mobile">
             Masuk <ArrowRight size={16} />
-          </button>
+          </a>
         </div>
       )}
 
@@ -510,9 +518,9 @@ export default function LandingPage({ initialDeposits = [], mockUsers = [] }) {
                 Masuk ke dashboard untuk mencatat, memantau, dan mengelola data sampah dari unit Anda secara real-time.
               </p>
               <div className="cta-buttons">
-                <button className="btn-cta-primary" onClick={() => router.push('/login')}>
+                <a href="/login" className="btn-cta-primary">
                   Login Sekarang <ArrowRight size={18} />
-                </button>
+                </a>
               </div>
             </div>
           </div>

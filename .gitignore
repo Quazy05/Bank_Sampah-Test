@@ -1,15 +1,23 @@
-node_modules
-.next
-.env.local
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Environment variables
 .env
+
+# Log files
 *.log
 
-# Local scripts and data
-*.py
-add_banjarnegara.js
-create_log_table.js
-database_cleanup.js
-import_historical_data.js
-keperluan/
+# IDE settings
+.vscode/
 
-.env.vercel
+# OS files
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# One-time scripts and utilities
+keperluan/

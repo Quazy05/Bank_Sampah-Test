@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { query } from '../../../lib/db';
 
 export async function POST(request) {
@@ -18,6 +18,9 @@ export async function POST(request) {
       if (user.status !== 'Aktif') {
         return NextResponse.json({ error: 'Account is inactive' }, { status: 403 });
       }
+
+
+
       return NextResponse.json({ success: true, user });
     } else {
       return NextResponse.json({ error: 'Username atau password salah' }, { status: 401 });

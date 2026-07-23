@@ -14,6 +14,8 @@ import {
   KATEGORI_SAMPAH
 } from '../lib/mockData';
 import { MasterDataManagement } from './MasterDataManagement';
+import { ManajemenProgram } from './ManajemenProgram';
+import { DataPemanfaatan } from './DataPemanfaatan';
 import { exportToPDF, exportToExcelMultiSheet } from '../lib/exportUtils';
 
 
@@ -131,7 +133,7 @@ const ITEMS_PER_PAGE = 10;
 
 export function AdminDashboard({ role, deposits, neraca, buktiBayar, inventarisasi = [], rekapProgram = [], users = [], clients = [], onLogout, onDeleteDeposit, onUpdateStatus, onUpdateBuktiStatus, userUnit }) {
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -153,9 +155,23 @@ export function AdminDashboard({ role, deposits, neraca, buktiBayar, inventarisa
   const [endDate, setEndDate] = useState('');
   const [notification, setNotification] = useState(null);
 
-  const [deleteTarget, setDeleteTarget] = useState(null); // Untuk hapus
-  const [rejectTarget, setRejectTarget] = useState(null); // Untuk tolak
-  const [rejectReason, setRejectReason] = useState(''); // Untuk alasan penolakan
+  const [deleteTarget, setDeleteTarget] = useState(null); 
+  const [rejectTarget, setRejectTarget] = useState(null); 
+  const [rejectReason, setRejectReason] = useState(''); 
+
+  const [programsData, setProgramsData] = useState([]);
+  const [inputProgramsData, setInputProgramsData] = useState([]);
+
+  useEffect(() => {
+    if (role === 'admin llk' || role === 'admin sis' || !role) { // Fetch for all admins just in case, but particularly for llk
+      fetch('/api/programs').then(res => res.json()).then(data => {
+        if (data.success) setProgramsData(data.data);
+      }).catch(console.error);
+      fetch('/api/input-program').then(res => res.json()).then(data => {
+        if (data.success) setInputProgramsData(data.data);
+      }).catch(console.error);
+    }
+  }, [role]);
 
   useEffect(() => {
     setSelectedRow(null);
@@ -281,6 +297,7 @@ export function AdminDashboard({ role, deposits, neraca, buktiBayar, inventarisa
 
   const sidebarItems = role === 'admin sis' ? [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'manajemen-program', label: 'Manajemen Program', icon: FileText },
     { id: 'pengelola-data', label: 'Manajemen Pengguna & Unit', icon: Users },
     { id: 'master-data', label: 'Data Master', icon: Settings },
   ] : [
@@ -289,6 +306,7 @@ export function AdminDashboard({ role, deposits, neraca, buktiBayar, inventarisa
     { id: 'reports', label: 'Laporan', icon: FileText },
     { id: 'neraca', label: 'Neraca Sampah Bulanan', icon: Database },
     { id: 'inventarisasi', label: 'Inventarisasi Historis', icon: FileCheck },
+    { id: 'data-pemanfaatan', label: 'Data Pemanfaatan', icon: Activity },
     { id: 'rekap-program', label: 'Rekap Program Historis', icon: CheckCircle },
     { id: 'bukti-bayar', label: 'Bukti Bayar', icon: Recycle },
   ];
@@ -297,6 +315,8 @@ export function AdminDashboard({ role, deposits, neraca, buktiBayar, inventarisa
     dashboard: 'Dashboard', 'waste-monitoring': 'Monitoring Sampah',
     'pengelola-data': 'Manajemen Pengguna & Unit',
     'master-data': 'Manajemen Data Master',
+    'manajemen-program': 'Manajemen Program Pemanfaatan',
+    'data-pemanfaatan': 'Data Input Pemanfaatan (User)',
     reports: 'Laporan', neraca: 'Neraca Sampah Bulanan',
     'bukti-bayar': 'Bukti Bayar',
     inventarisasi: 'Inventarisasi Sampah Historis (2021-2026)',
@@ -405,7 +425,7 @@ export function AdminDashboard({ role, deposits, neraca, buktiBayar, inventarisa
             </thead>
             <tbody>
               {unitDeposits.slice(0, 5).map((d, i) => (
-                <tr key={d.id} style={{ borderBottom: '1px solid rgba(203, 213, 225, 0.4)', background: i % 2 === 0 ? 'white' : '#FAFCFD' }}>
+                <tr key={`${d.id}-${i}`} style={{ borderBottom: '1px solid rgba(203, 213, 225, 0.4)', background: i % 2 === 0 ? 'white' : '#FAFCFD' }}>
                   <td style={{ padding: '14px 18px', fontSize: '0.85rem', color: 'var(--ds-text)' }}>{d.date}</td>
                   <td style={{ padding: '14px 18px', fontWeight: 600, fontSize: '0.85rem', color: 'var(--ds-text)' }}>{d.user}</td>
                   <td style={{ padding: '14px 18px' }}>
@@ -448,13 +468,7 @@ export function AdminDashboard({ role, deposits, neraca, buktiBayar, inventarisa
         <span style={{ fontSize: '0.85rem', color: 'var(--ds-text-muted)', fontWeight: 600 }}>Aksi:</span>
         <button disabled={!selectedRow} onClick={() => selectedRow && handleEdit(selectedRow, 'deposit')} style={{ padding: '8px 16px', background: selectedRow ? '#F1F5F9' : '#F8FAFC', color: selectedRow ? '#0F172A' : '#94A3B8', border: '1px solid var(--ds-border)', borderRadius: 8, cursor: selectedRow ? 'pointer' : 'not-allowed', fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.2s' }}>Edit</button>
         <button disabled={!selectedRow} onClick={() => selectedRow && handleDelete(selectedRow.id, 'deposit')} style={{ padding: '8px 16px', background: selectedRow ? '#FEE2E2' : '#F8FAFC', color: selectedRow ? '#EF4444' : '#94A3B8', border: '1px solid var(--ds-border)', borderRadius: 8, cursor: selectedRow ? 'pointer' : 'not-allowed', fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.2s' }}>Hapus</button>
-        {selectedRow && selectedRow.status === 'Pending' && onUpdateStatus && (
-          <>
-            <div style={{ width: 1, height: 24, background: 'var(--ds-border)', margin: '0 8px' }} />
-            <button onClick={() => { onUpdateStatus(selectedRow.id, 'Terverifikasi'); setSelectedRow(null); }} style={{ padding: '8px 16px', background: '#D1FAE5', color: '#047857', border: '1px solid var(--ds-border)', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Terima</button>
-            <button onClick={() => { onUpdateStatus(selectedRow.id, 'Ditolak'); setSelectedRow(null); }} style={{ padding: '8px 16px', background: '#FEE2E2', color: '#B91C1C', border: '1px solid var(--ds-border)', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Tolak</button>
-          </>
-        )}
+
       </div>
       <div style={{ overflowX: 'auto', minHeight: 400 }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -472,7 +486,7 @@ export function AdminDashboard({ role, deposits, neraca, buktiBayar, inventarisa
           </thead>
           <tbody>
             {paginatedDeposits.map((d, i) => (
-              <tr key={d.id} onClick={() => setSelectedRow(selectedRow?.id === d.id ? null : d)} style={{ borderBottom: '1px solid rgba(203, 213, 225, 0.4)', background: selectedRow?.id === d.id ? '#F0F9FF' : (i % 2 === 0 ? 'white' : '#FAFCFD'), cursor: 'pointer', transition: 'background 0.2s' }}>
+              <tr key={`${d.id}-${i}`} onClick={() => setSelectedRow(selectedRow?.id === d.id ? null : d)} style={{ borderBottom: '1px solid rgba(203, 213, 225, 0.4)', background: selectedRow?.id === d.id ? '#F0F9FF' : (i % 2 === 0 ? 'white' : '#FAFCFD'), cursor: 'pointer', transition: 'background 0.2s' }}>
                 <td style={{ padding: '14px 18px' }}>
                   <input type="radio" checked={selectedRow?.id === d.id} onChange={() => setSelectedRow(d)} style={{ cursor: 'pointer' }} />
                 </td>
@@ -592,6 +606,79 @@ export function AdminDashboard({ role, deposits, neraca, buktiBayar, inventarisa
       'Jenis': d.jenis, 
       'Berat (Kg)': Number(d.weight).toFixed(1)
     }));
+
+    // Data Pemanfaatan
+    try {
+      const pemRes = await fetch('/api/input-program');
+      const pemData = await pemRes.json();
+      if (pemData.success && pemData.data.length > 0) {
+        sheetsData["Data_Pemanfaatan_Raw"] = pemData.data.map(d => {
+          const row = {
+            'Tanggal': d.date,
+            'Waktu': d.time,
+            'Pengelola / User': d.user,
+            'Unit': d.unit,
+            'Nama Program': d.program_name,
+            'Kategori Sampah': d.kategori_sampah || '-',
+            'Jenis Sampah': d.jenis_sampah || '-'
+          };
+          if (d.form_data) {
+            Object.entries(d.form_data).forEach(([key, val]) => {
+              row[key] = val;
+            });
+          }
+          return row;
+        });
+
+        // Rekapitulasi per Program (seperti file Excel Keperluan)
+        const programs = [...new Set(pemData.data.map(d => d.program_name))];
+        const currentYear = new Date().getFullYear();
+        const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+        programs.forEach(programName => {
+           const progData = pemData.data.filter(d => d.program_name === programName && d.date.startsWith(`${currentYear}`));
+           
+           const monthlyData = {};
+           progData.forEach(d => {
+             const monthIdx = parseInt(d.date.substring(5, 7)) - 1;
+             if (!monthlyData[monthIdx]) monthlyData[monthIdx] = { weight: 0 };
+             
+             let weight = 0;
+             if (d.form_data) {
+               const numericValues = Object.values(d.form_data).map(v => Number(v)).filter(v => !isNaN(v) && v > 0);
+               if (numericValues.length > 0) weight = numericValues[0];
+             }
+             monthlyData[monthIdx].weight += weight;
+           });
+
+           const sheetRows = MONTHS.map((month, idx) => {
+             const weightKg = monthlyData[idx] ? monthlyData[idx].weight : 0;
+             const weightTon = weightKg / 1000;
+             return {
+                'Bulan': month,
+                'Total Pemanfaatan (Kg)': weightKg,
+                'Absolut (Ton)': weightTon,
+                'Anggaran (Juta Rp)': 0,
+                'Penghematan (Juta Rp)': 0
+             }
+           });
+           
+           const totalKg = sheetRows.reduce((sum, r) => sum + r['Total Pemanfaatan (Kg)'], 0);
+           sheetRows.push({
+             'Bulan': 'TOTAL',
+             'Total Pemanfaatan (Kg)': totalKg,
+             'Absolut (Ton)': totalKg / 1000,
+             'Anggaran (Juta Rp)': 0,
+             'Penghematan (Juta Rp)': 0
+           });
+
+           let safeSheetName = `P_${programName}`.substring(0, 31).replace(/[^a-zA-Z0-9]/g, '_');
+           sheetsData[safeSheetName] = sheetRows;
+        });
+      }
+    } catch (e) {
+      console.error("Gagal mengambil data pemanfaatan untuk excel", e);
+    }
 
     try {
       await exportToExcelMultiSheet(`Laporan_Bank_Sampah_Lengkap`, sheetsData);
@@ -1036,9 +1123,9 @@ export function AdminDashboard({ role, deposits, neraca, buktiBayar, inventarisa
       )}
 
       {/* Sidebar Container */}
-      <div className="sidebar-container" style={{
+      <div className={`sidebar-container ${!sidebarOpen ? 'closed' : ''} ${sidebarOpen ? 'open' : ''}`} style={{
         width: 260, background: 'var(--ds-dark)', color: 'white', display: 'flex', flexDirection: 'column',
-        position: 'fixed', top: 0, bottom: 0, zIndex: 50, transition: 'left 0.3s ease',
+        position: 'fixed', top: 0, bottom: 0, zIndex: 50,
         boxShadow: '4px 0 30px rgba(0,0,0,0.15)'
       }}>
         <div style={{ padding: '24px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -1056,7 +1143,10 @@ export function AdminDashboard({ role, deposits, neraca, buktiBayar, inventarisa
             const Icon = item.icon;
             const isActive = currentPage === item.id;
             return (
-              <button key={item.id} onClick={() => navigateTo(item.id)}
+              <button key={item.id} onClick={() => { 
+                setCurrentPage(item.id); 
+                if (window.innerWidth <= 1024) setSidebarOpen(false); 
+              }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
                   background: isActive ? 'rgba(8, 145, 178, 0.15)' : 'transparent', border: 'none', borderRadius: 12,
@@ -1073,10 +1163,10 @@ export function AdminDashboard({ role, deposits, neraca, buktiBayar, inventarisa
       </div>
 
       {/* Main Content */}
-      <div className="main-content" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: '100vh', transition: 'margin 0.3s ease' }}>
+      <div className={`main-content ${!sidebarOpen ? 'sidebar-closed' : ''}`} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: '100vh', transition: 'margin 0.3s ease' }}>
         <header style={{ background: 'white', padding: '16px 28px', borderBottom: '1px solid var(--ds-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 40 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--ds-text)', display: 'none' }}>
+            <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--ds-text)' }}>
               <Menu size={24} />
             </button>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1149,6 +1239,8 @@ export function AdminDashboard({ role, deposits, neraca, buktiBayar, inventarisa
           {currentPage === 'bukti-bayar' && renderBuktiBayar()}
           
           {currentPage === 'master-data' && <MasterDataManagement />}
+          {currentPage === 'manajemen-program' && <ManajemenProgram />}
+          {currentPage === 'data-pemanfaatan' && <DataPemanfaatan />}
 
           {currentPage === 'pengelola-data' && (
             <div style={{ background: 'white', borderRadius: '1.5rem', padding: 24, boxShadow: '0 10px 30px rgba(8, 145, 178, 0.03)', border: '1px solid var(--ds-border)' }}>
